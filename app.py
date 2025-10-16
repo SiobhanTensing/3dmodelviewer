@@ -1,6 +1,6 @@
 import streamlit as st
-import pythreejs as p3d
-import numpy as np
+import base64
+import html
 
 st.title("GLB 3D Model Viewer")
 
@@ -8,18 +8,20 @@ uploaded_file = st.file_uploader("Upload a GLB file", type=["glb"])
 
 if uploaded_file is not None:
     st.success("File uploaded successfully!")
-    
-    # Load the GLB file
-    model_data = uploaded_file.read()
-    
-    # Create a 3D scene
-    scene = p3d.Scene()
-    camera = p3d.PerspectiveCamera(position=[0, 1, 3], fov=75)
-    renderer = p3d.Renderer(camera=camera, scene=scene, controls=[p3d.OrbitControls(controlling=camera)])
-    
-    # Create a GLB loader
-    loader = p3d.GLTFLoader()
-    loader.load(model_data, lambda gltf: scene.add(gltf.scene))
-    
-    # Display the 3D model
-    st.pydeck_chart(renderer)
+    model_bytes = uploaded_file.read()
+    b64 = base64.b64encode(model_bytes).decode("utf-8")
+    data_url = f"data:model/gltf-binary;base64,{b64}"
+
+    # Minimal HTML that uses the model-viewer web component to display the GLB
+    html_content = f'''
+    <script type="module" src="https://unpkg.com/@google/model-viewer/dist/model-viewer.min.js"></script>
+    <model-viewer src="{html.escape(data_url)}"
+                  alt="Uploaded GLB"
+                  camera-controls
+                  auto-rotate
+                  exposure="1"
+                  style="width:100%; height:640px; background-color: #f0f0f0;">
+    </model-viewer>
+    '''
+
+    st.components.v1.html(html_content, height=700)
